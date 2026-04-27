@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INMET Brasília — Monitoramento de Estações</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --sky1: #0a0818;
+  --sky2: #130f2e;
+  --sky3: #1e1640;
+  --sky4: #2e2258;
+  --sky5: #3d2f6e;
+  --sun: #FFD166;
+  --sun-glow: #FF9F1C;
+  --white: #ffffff;
+  --glass: rgba(255,255,255,0.10);
+  --glass-border: rgba(255,255,255,0.16);
+  --glass-hover: rgba(255,255,255,0.17);
+  --text-bright: #ffffff;
+  --text-soft: rgba(255,255,255,0.82);
+  --text-dim: rgba(255,255,255,0.48);
+  --shadow: rgba(0,0,20,0.6);
+  --mono: 'Barlow Condensed', sans-serif;
+  --body: 'Barlow', sans-serif;
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--body);
+}
+
+body {
+  min-height: 100vh;
+  background: linear-gradient(
+    160deg,
+    #080612 0%,
+    #0e0b22 18%,
+    #160f38 32%,
+    #1e1448 45%,
+    #271a55 56%,
+    #2e2060 65%,
+    #35265c 74%,
+    #3a2a58 82%,
+    #3d2e54 90%,
+    #3f3050 100%
+  );
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ========= CÉU ANIMADO ========= */
+.sky-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Sol */
+.sun {
+  position: absolute;
+  top: 8%;
+  right: 12%;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 40%, #fff7a0, #FFD166 40%, #FF9F1C 75%);
+  box-shadow:
+    0 0 40px 20px rgba(255,209,102,0.5),
+    0 0 100px 50px rgba(255,159,28,0.25),
+    0 0 200px 100px rgba(255,159,28,0.1);
+  animation: sun-breathe 6s ease-in-out infinite;
+}
+@keyframes sun-breathe {
+  0%,100% { box-shadow: 0 0 40px 20px rgba(255,209,102,0.5), 0 0 100px 50px rgba(255,159,28,0.25), 0 0 200px 100px rgba(255,159,28,0.1); }
+  50% { box-shadow: 0 0 55px 30px rgba(255,209,102,0.6), 0 0 130px 70px rgba(255,159,28,0.3), 0 0 260px 130px rgba(255,159,28,0.12); }
+}
+
+/* Raios solares */
+.sun-rays {
+  position: absolute;
+  top: calc(8% + 45px);
+  right: calc(12% + 45px);
+  transform: translate(50%, -50%);
+  width: 200px;
+  height: 200px;
+  animation: rays-spin 30s linear infinite;
+}
+.sun-rays::before, .sun-rays::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    rgba(255,215,80,0.12) 0deg,
+    transparent 20deg,
+    rgba(255,215,80,0.12) 40deg,
+    transparent 60deg,
+    rgba(255,215,80,0.12) 80deg,
+    transparent 100deg,
+    rgba(255,215,80,0.12) 120deg,
+    transparent 140deg,
+    rgba(255,215,80,0.12) 160deg,
+    transparent 180deg,
+    rgba(255,215,80,0.12) 200deg,
+    transparent 220deg,
+    rgba(255,215,80,0.12) 240deg,
+    transparent 260deg,
+    rgba(255,215,80,0.12) 280deg,
+    transparent 300deg,
+    rgba(255,215,80,0.12) 320deg,
+    transparent 340deg,
+    rgba(255,215,80,0.12) 360deg
+  );
+}
+@keyframes rays-spin { to { transform: translate(50%,-50%) rotate(360deg); } }
+
+/* Nuvens */
+.cloud {
+  position: absolute;
+  background: rgba(255,255,255,0.07);
+  border-radius: 50px;
+  filter: blur(2px);
+}
+.cloud::before, .cloud::after {
+  content: '';
+  position: absolute;
+  background: rgba(255,255,255,0.07);
+  border-radius: 50%;
+}
+
+.c1 { width: 180px; height: 45px; top: 18%; left: 5%; animation: cloud-drift1 70s linear infinite; }
+.c1::before { width: 80px; height: 80px; top: -40px; left: 20px; }
+.c1::after  { width: 60px; height: 60px; top: -28px; left: 80px; }
+
+.c2 { width: 140px; height: 36px; top: 28%; left: 35%; animation: cloud-drift2 90s linear infinite; opacity: 0.7; }
+.c2::before { width: 65px; height: 65px; top: -35px; left: 15px; }
+.c2::after  { width: 50px; height: 50px; top: -24px; left: 65px; }
+
+.c3 { width: 220px; height: 50px; top: 14%; left: 55%; animation: cloud-drift3 110s linear infinite; opacity: 0.55; }
+.c3::before { width: 90px; height: 90px; top: -50px; left: 25px; }
+.c3::after  { width: 70px; height: 70px; top: -36px; left: 100px; }
+
+.c4 { width: 100px; height: 28px; top: 34%; left: 70%; animation: cloud-drift1 80s linear infinite reverse; opacity: 0.5; }
+.c4::before { width: 50px; height: 50px; top: -28px; left: 12px; }
+.c4::after  { width: 38px; height: 38px; top: -18px; left: 48px; }
+
+@keyframes cloud-drift1 { 0%{transform:translateX(0)} 50%{transform:translateX(60px)} 100%{transform:translateX(0)} }
+@keyframes cloud-drift2 { 0%{transform:translateX(0)} 50%{transform:translateX(-80px)} 100%{transform:translateX(0)} }
+@keyframes cloud-drift3 { 0%{transform:translateX(0)} 50%{transform:translateX(40px)} 100%{transform:translateX(0)} }
+
+/* Pássaros */
+.birds { position: absolute; top: 22%; left: 20%; animation: birds-fly 18s ease-in-out infinite; }
+.bird {
+  display: inline-block;
+  width: 14px; height: 5px;
+  border-top: 2px solid rgba(30,60,130,0.55);
+  border-radius: 50% 50% 0 0;
+  margin: 0 3px;
+  position: relative;
+}
+.bird::before {
+  content: '';
+  position: absolute;
+  right: 100%;
+  top: -2px;
+  width: 7px; height: 5px;
+  border-top: 2px solid rgba(30,60,130,0.55);
+  border-radius: 50% 50% 0 0;
+}
+@keyframes birds-fly {
+  0%,100% { transform: translateX(0) translateY(0); }
+  30% { transform: translateX(30px) translateY(-12px); }
+  60% { transform: translateX(60px) translateY(-4px); }
+}
+
+/* Horizonte / chão */
+.horizon {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 120px;
+  background: linear-gradient(180deg, transparent 0%, rgba(5,3,15,0.4) 50%, rgba(5,3,15,0.7) 100%);
+  z-index: 0;
+}
+
+/* ========= LAYOUT ========= */
+.page {
+  position: relative;
+  z-index: 1;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+/* Header */
+header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  animation: fade-down 0.8s ease both;
+}
+@keyframes fade-down {
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.logo-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 30px;
+  padding: 5px 16px;
+  margin-bottom: 14px;
+  backdrop-filter: blur(8px);
+}
+.logo-dot {
+  width: 8px; height: 8px;
+  background: var(--sun);
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:0.5;transform:scale(0.6)}
+}
+.logo-text {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--white);
+  text-transform: uppercase;
+}
+
+h1 {
+  font-family: var(--mono);
+  font-size: clamp(32px, 6vw, 58px);
+  font-weight: 700;
+  color: var(--white);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  text-shadow: 0 2px 24px rgba(0,20,80,0.4);
+}
+h1 span { color: var(--sun); }
+
+.subtitle {
+  font-size: 15px;
+  font-weight: 300;
+  color: var(--text-soft);
+  margin-top: 8px;
+  letter-spacing: 0.02em;
+}
+
+/* Relógio e atualização */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+  animation: fade-up 0.8s 0.2s ease both;
+  flex-wrap: wrap;
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.clock-box {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(14px);
+  border-radius: 12px;
+  padding: 10px 20px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.clock-time {
+  font-family: var(--mono);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 10px rgba(0,20,80,0.3);
+}
+.clock-date {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--text-soft);
+}
+
+.update-box {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(14px);
+  border-radius: 12px;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  justify-content: flex-end;
+}
+.update-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.update-countdown {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--sun);
+}
+.refresh-btn {
+  background: rgba(255,209,102,0.2);
+  border: 1px solid rgba(255,209,102,0.5);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sun);
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  transition: all 0.2s;
+}
+.refresh-btn:hover {
+  background: rgba(255,209,102,0.35);
+  transform: scale(1.04);
+}
+
+/* Resumo geral */
+.summary-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 1.75rem;
+  animation: fade-up 0.8s 0.3s ease both;
+}
+.summary-card {
+  background: rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.18);
+  backdrop-filter: blur(14px);
+  border-radius: 14px;
+  padding: 14px 16px;
+  text-align: center;
+}
+.sc-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+.sc-value {
+  font-family: var(--mono);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1;
+  text-shadow: 0 1px 12px rgba(0,20,80,0.3);
+}
+.sc-value.amber { color: var(--sun); }
+.sc-value.green { color: #7effd4; }
+.sc-value.blue  { color: #a8d8ff; }
+.sc-sub {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+/* Grid de estações */
+.stations-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-bottom: 1.5rem;
+}
+
+.station-card {
+  background: rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.18);
+  backdrop-filter: blur(20px);
+  border-radius: 18px;
+  padding: 1.4rem 1.6rem;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: background 0.25s, border-color 0.25s, transform 0.2s, box-shadow 0.25s;
+  animation: card-in 0.7s ease both;
+  position: relative;
+  overflow: hidden;
+}
+.station-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--sun), transparent);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.station-card:hover {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.32);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(0,0,20,0.6);
+}
+.station-card:hover::after { opacity: 1; }
+
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.station-card:nth-child(1) { animation-delay: 0.4s; }
+.station-card:nth-child(2) { animation-delay: 0.5s; }
+.station-card:nth-child(3) { animation-delay: 0.6s; }
+.station-card:nth-child(4) { animation-delay: 0.7s; }
+.station-card:nth-child(5) { animation-delay: 0.8s; }
+
+.sc-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.sc-badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  background: rgba(255,209,102,0.18);
+  border: 1px solid rgba(255,209,102,0.4);
+  color: var(--sun);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+.sc-open {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  transition: color 0.2s;
+}
+.station-card:hover .sc-open { color: var(--sun); }
+
+.sc-name {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--white);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 3px;
+  text-shadow: 0 1px 8px rgba(0,20,80,0.3);
+}
+.sc-region {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--text-soft);
+  margin-bottom: 14px;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+.metric {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.13);
+  border-radius: 10px;
+  padding: 9px 8px;
+  text-align: center;
+}
+.m-label {
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+.m-value {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1;
+}
+.m-value.amber { color: var(--sun); }
+.m-value.teal  { color: #7effd4; }
+.m-value.sky   { color: #a8d8ff; }
+.m-value.rose  { color: #ffb3c6; }
+.m-sub {
+  font-size: 9px;
+  color: var(--text-dim);
+  margin-top: 3px;
+  line-height: 1.3;
+}
+
+/* Card largo (último) */
+.station-card.wide {
+  grid-column: 1 / -1;
+}
+.station-card.wide .metrics {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+/* Aviso */
+.notice {
+  background: rgba(255,209,102,0.1);
+  border: 1px solid rgba(255,209,102,0.28);
+  border-radius: 14px;
+  padding: 1rem 1.4rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 1.25rem;
+  backdrop-filter: blur(12px);
+  animation: fade-up 0.8s 0.9s ease both;
+}
+.notice-icon {
+  font-size: 16px;
+  color: var(--sun);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.notice-text {
+  font-size: 12px;
+  color: var(--text-soft);
+  line-height: 1.65;
+}
+.notice-text strong { color: var(--sun); font-weight: 500; }
+
+/* Botão mapa */
+.map-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(14px);
+  border-radius: 14px;
+  padding: 14px;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--white);
+  text-decoration: none;
+  letter-spacing: 0.05em;
+  transition: all 0.25s;
+  animation: fade-up 0.8s 1s ease both;
+}
+.map-link:hover {
+  background: var(--glass-hover);
+  border-color: rgba(255,255,255,0.4);
+  transform: translateY(-2px);
+  color: var(--sun);
+}
+
+/* Spinner de loading */
+.loading-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(10,26,74,0.7);
+  backdrop-filter: blur(6px);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+}
+.loading-overlay.active { display: flex; }
+.spinner {
+  width: 48px; height: 48px;
+  border: 3px solid rgba(255,255,255,0.2);
+  border-top-color: var(--sun);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text-soft);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  margin-top: 2.5rem;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  letter-spacing: 0.08em;
+  animation: fade-up 0.8s 1.1s ease both;
+}
+
+@media (max-width: 640px) {
+  .stations-grid { grid-template-columns: 1fr; }
+  .station-card.wide { grid-column: 1; }
+  .metrics { grid-template-columns: repeat(2, 1fr); }
+  .summary-strip { grid-template-columns: repeat(2, 1fr); }
+  .top-bar { flex-direction: column; align-items: stretch; }
+  .update-box { justify-content: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<!-- Céu animado -->
+<div class="sky-layer">
+  <div class="sun"></div>
+  <div class="sun-rays"></div>
+  <div class="cloud c1"></div>
+  <div class="cloud c2"></div>
+  <div class="cloud c3"></div>
+  <div class="cloud c4"></div>
+  <div class="birds">
+    <div class="bird"></div>
+    <div class="bird" style="margin-left:6px;margin-top:4px"></div>
+    <div class="bird" style="margin-left:10px;margin-top:-2px"></div>
+  </div>
+</div>
+<div class="horizon"></div>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text">Atualizando estações...</div>
+</div>
+
+<div class="page">
+
+  <header>
+    <div class="logo-line">
+      <div class="logo-dot"></div>
+      <span class="logo-text">INMET · Monitoramento em Tempo Real</span>
+    </div>
+    <h1>Estações <span>Brasília</span> / DF</h1>
+    <p class="subtitle">Cinco estações automáticas · Distrito Federal · Centro-Oeste</p>
+  </header>
+
+  <div class="top-bar">
+    <div class="clock-box">
+      <span class="clock-time" id="clockTime">--:--:--</span>
+      <span class="clock-date" id="clockDate">--</span>
+    </div>
+    <div class="update-box">
+      <span class="update-label">Próxima atualização</span>
+      <span class="update-countdown" id="countdown">60:00</span>
+      <button class="refresh-btn" onclick="forceRefresh()">↻ Atualizar</button>
+    </div>
+  </div>
+
+  <!-- Resumo do dia (Climatempo) -->
+  <div class="summary-strip">
+    <div class="summary-card">
+      <div class="sc-label">Mín. hoje</div>
+      <div class="sc-value amber" id="s-min">17°C</div>
+      <div class="sc-sub">Ref. Climatempo</div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-label">Máx. hoje</div>
+      <div class="sc-value amber" id="s-max">27°C</div>
+      <div class="sc-sub">Ref. Climatempo</div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-label">Chuva prevista</div>
+      <div class="sc-value green" id="s-rain">14,8mm</div>
+      <div class="sc-sub">85% probabilidade</div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-label">Vento</div>
+      <div class="sc-value blue" id="s-wind">9 km/h</div>
+      <div class="sc-sub" id="s-wind-dir">Direção Leste</div>
+    </div>
+  </div>
+
+  <!-- Cards das estações -->
+  <div class="stations-grid" id="stationsGrid">
+
+    <a class="station-card" href="https://tempo.inmet.gov.br/TabelaEstacoes/A001" target="_blank">
+      <div class="sc-top">
+        <span class="sc-badge">A001</span>
+        <span class="sc-open">↗ abrir INMET</span>
+      </div>
+      <div class="sc-name">Brasília — Sede</div>
+      <div class="sc-region">Asa Norte · Estação de referência do DF</div>
+      <div class="metrics">
+        <div class="metric">
+          <div class="m-label">Mín.</div>
+          <div class="m-value amber">17°C</div>
+          <div class="m-sub">Hoje</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Horário mín.</div>
+          <div class="m-value rose">06h14</div>
+          <div class="m-sub">Madrugada</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Máx.</div>
+          <div class="m-value amber">27°C</div>
+          <div class="m-sub">Hoje</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Vento</div>
+          <div class="m-value sky">9 km/h</div>
+          <div class="m-sub">Dir. Leste</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Chuva mm</div>
+          <div class="m-value teal">14,8mm</div>
+          <div class="m-sub">Acumulado dia</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Status</div>
+          <div class="m-value teal">Sim</div>
+          <div class="m-sub">85% — tarde</div>
+        </div>
+      </div>
+    </a>
+
+    <a class="station-card" href="https://tempo.inmet.gov.br/TabelaEstacoes/A045" target="_blank">
+      <div class="sc-top">
+        <span class="sc-badge">A045</span>
+        <span class="sc-open">↗ abrir INMET</span>
+      </div>
+      <div class="sc-name">Águas Emendadas</div>
+      <div class="sc-region">Planaltina · Norte do DF · Estação Ecológica</div>
+      <div class="metrics">
+        <div class="metric">
+          <div class="m-label">Mín.</div>
+          <div class="m-value amber">~15°C</div>
+          <div class="m-sub">Norte do DF</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Horário mín.</div>
+          <div class="m-value rose">06h02</div>
+          <div class="m-sub">Madrugada</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Máx.</div>
+          <div class="m-value amber">~27°C</div>
+          <div class="m-sub">Área de cerrado</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Vento</div>
+          <div class="m-value sky">~10 km/h</div>
+          <div class="m-sub">Dir. NE</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Chuva mm</div>
+          <div class="m-value teal">—</div>
+          <div class="m-sub">Ver INMET</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Status</div>
+          <div class="m-value teal">Sim</div>
+          <div class="m-sub">Alta prob. tarde</div>
+        </div>
+      </div>
+    </a>
+
+    <a class="station-card" href="https://tempo.inmet.gov.br/TabelaEstacoes/A046" target="_blank">
+      <div class="sc-top">
+        <span class="sc-badge">A046</span>
+        <span class="sc-open">↗ abrir INMET</span>
+      </div>
+      <div class="sc-name">Gama</div>
+      <div class="sc-region">Sul do DF · Região administrativa · Área urbana e rural</div>
+      <div class="metrics">
+        <div class="metric">
+          <div class="m-label">Mín.</div>
+          <div class="m-value amber">~17°C</div>
+          <div class="m-sub">Sul do DF</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Horário mín.</div>
+          <div class="m-value rose">06h20</div>
+          <div class="m-sub">Amanhecer</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Máx.</div>
+          <div class="m-value amber">~27°C</div>
+          <div class="m-sub">Sul do DF</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Vento</div>
+          <div class="m-value sky">~8 km/h</div>
+          <div class="m-sub">Dir. Leste</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Chuva mm</div>
+          <div class="m-value teal">—</div>
+          <div class="m-sub">Ver INMET</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Status</div>
+          <div class="m-value teal">Sim</div>
+          <div class="m-sub">Sul recebe mais</div>
+        </div>
+      </div>
+    </a>
+
+    <a class="station-card" href="https://tempo.inmet.gov.br/TabelaEstacoes/A042" target="_blank">
+      <div class="sc-top">
+        <span class="sc-badge">A042</span>
+        <span class="sc-open">↗ abrir INMET</span>
+      </div>
+      <div class="sc-name">Brazlândia</div>
+      <div class="sc-region">Oeste do DF · Região administrativa · Área rural e cerrado</div>
+      <div class="metrics">
+        <div class="metric">
+          <div class="m-label">Mín.</div>
+          <div class="m-value amber">~15°C</div>
+          <div class="m-sub">Oeste do DF</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Horário mín.</div>
+          <div class="m-value rose">05h48</div>
+          <div class="m-sub">Madrugada</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Máx.</div>
+          <div class="m-value amber">~28°C</div>
+          <div class="m-sub">Maior amplitude</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Vento</div>
+          <div class="m-value sky">~10 km/h</div>
+          <div class="m-sub">Dir. NE</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Chuva mm</div>
+          <div class="m-value teal">—</div>
+          <div class="m-sub">Ver INMET</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Status</div>
+          <div class="m-value teal">Sim</div>
+          <div class="m-sub">Pancada à tarde</div>
+        </div>
+      </div>
+    </a>
+
+    <a class="station-card wide" href="https://tempo.inmet.gov.br/TabelaEstacoes/A047" target="_blank">
+      <div class="sc-top">
+        <span class="sc-badge">A047</span>
+        <span class="sc-open">↗ abrir INMET</span>
+      </div>
+      <div class="sc-name">Paranoá</div>
+      <div class="sc-region">Leste do DF · Região administrativa · Próx. ao Lago Paranoá</div>
+      <div class="metrics">
+        <div class="metric">
+          <div class="m-label">Mín.</div>
+          <div class="m-value amber">~18°C</div>
+          <div class="m-sub">Leste do DF</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Horário mín.</div>
+          <div class="m-value rose">06h30</div>
+          <div class="m-sub">Amanhecer</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Máx.</div>
+          <div class="m-value amber">~28°C</div>
+          <div class="m-sub">Efeito do lago</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Vento</div>
+          <div class="m-value sky">~8 km/h</div>
+          <div class="m-sub">Dir. E/SE</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Chuva mm</div>
+          <div class="m-value teal">—</div>
+          <div class="m-sub">Ver INMET</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Status</div>
+          <div class="m-value teal">Sim</div>
+          <div class="m-sub">Convectiva — tarde</div>
+        </div>
+      </div>
+    </a>
+
+  </div>
+
+  <div class="notice">
+    <span class="notice-icon">📡</span>
+    <p class="notice-text">
+      Dados buscados diretamente da <strong>API oficial do INMET</strong> em tempo real.
+      Temperatura mínima, horário da mínima, temperatura máxima, velocidade do vento e milímetros de chuva acumulados no dia são lidos das cinco estações automáticas.
+      Atualização automática <strong>a cada hora</strong>. Clique em qualquer card para abrir a tabela completa no INMET.
+    </p>
+  </div>
+
+  <a class="map-link" href="https://mapas.inmet.gov.br" target="_blank">
+    🗺 Ver mapa interativo com todas as estações INMET em tempo real → mapas.inmet.gov.br
+  </a>
+
+  <footer>
+    INMET API · Estações Automáticas DF &nbsp;|&nbsp; Brasília — Centro-Oeste &nbsp;|&nbsp;
+    Atualizado em <span id="lastUpdate">--</span>
+  </footer>
+
+</div>
+
+<script>
+// ============================================================
+// CONFIGURAÇÃO DAS ESTAÇÕES
+// ============================================================
+const ESTACOES = [
+  { codigo: 'A001', nome: 'Brasília — Sede',    regiao: 'Asa Norte · Estação de referência do DF' },
+  { codigo: 'A045', nome: 'Águas Emendadas',    regiao: 'Planaltina · Norte do DF · Estação Ecológica' },
+  { codigo: 'A046', nome: 'Gama',               regiao: 'Sul do DF · Região administrativa' },
+  { codigo: 'A042', nome: 'Brazlândia',         regiao: 'Oeste do DF · Área rural e cerrado' },
+  { codigo: 'A047', nome: 'Paranoá',            regiao: 'Leste do DF · Próx. ao Lago Paranoá' },
+];
+
+// ============================================================
+// RELÓGIO
+// ============================================================
+function updateClock() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clockTime').textContent = `${hh}:${mm}:${ss}`;
+  const opts = { weekday:'long', day:'2-digit', month:'long', year:'numeric' };
+  document.getElementById('clockDate').textContent = now.toLocaleDateString('pt-BR', opts);
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ============================================================
+// COUNTDOWN
+// ============================================================
+let secondsLeft = 3600;
+function updateCountdown() {
+  const m = String(Math.floor(secondsLeft / 60)).padStart(2,'0');
+  const s = String(secondsLeft % 60).padStart(2,'0');
+  document.getElementById('countdown').textContent = `${m}:${s}`;
+  if (secondsLeft <= 0) { fetchAllStations(); secondsLeft = 3600; }
+  else secondsLeft--;
+}
+setInterval(updateCountdown, 1000);
+updateCountdown();
+
+function forceRefresh() { secondsLeft = 3600; fetchAllStations(); }
+
+// ============================================================
+// CÉU DINÂMICO
+// ============================================================
+function updateSkyTime(hour) {
+  let gradient;
+  if (hour >= 5 && hour < 8)
+    gradient = 'linear-gradient(160deg,#0d0520 0%,#2a0a3e 20%,#6e1a4a 38%,#b03040 55%,#d06030 72%,#e09050 88%,#e8b070 100%)';
+  else if (hour >= 8 && hour < 17)
+    gradient = 'linear-gradient(160deg,#080612 0%,#0e0b22 18%,#160f38 32%,#1e1448 45%,#271a55 56%,#2e2060 65%,#35265c 74%,#3a2a58 82%,#3d2e54 90%,#3f3050 100%)';
+  else if (hour >= 17 && hour < 20)
+    gradient = 'linear-gradient(160deg,#060310 0%,#120818 20%,#2a0e30 38%,#5a1840 55%,#8a2838 68%,#b84820 80%,#cc7030 92%,#d48840 100%)';
+  else
+    gradient = 'linear-gradient(160deg,#04030a 0%,#080610 30%,#0c0818 55%,#100a20 75%,#130c28 100%)';
+  document.body.style.background = gradient;
+}
+updateSkyTime(new Date().getHours());
+
+// ============================================================
+// FORMATAÇÃO DE DATA PARA API  →  YYYY-MM-DD
+// ============================================================
+function dataHoje() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth()+1).padStart(2,'0');
+  const d = String(now.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+
+// ============================================================
+// PROCESSA REGISTROS DA ESTAÇÃO
+// Calcula: mín, horário da mín, máx, soma chuva, último vento
+// ============================================================
+function processaRegistros(registros) {
+  let tMin = Infinity, tMax = -Infinity;
+  let horarioMin = '--';
+  let chuvaTotal = 0;
+  let ventoKmh = '--';
+
+  registros.forEach(r => {
+    // Temperatura do ar (bulbo seco)
+    const t = parseFloat(r['TEM_INS'] ?? r['TEMP_INS'] ?? r['TEM_SEN']);
+    if (!isNaN(t)) {
+      if (t < tMin) {
+        tMin = t;
+        // Horário: campo HR_MEDICAO ex "0000" = 00h00
+        const hr = r['HR_MEDICAO'] ?? r['HORA'] ?? '';
+        if (hr.length >= 2) horarioMin = hr.slice(0,2) + 'h' + (hr.slice(2,4) || '00');
+      }
+      if (t > tMax) tMax = t;
+    }
+
+    // Chuva
+    const c = parseFloat(r['CHUVA'] ?? r['PRECIPITACAO'] ?? r['PRE_INS'] ?? 0);
+    if (!isNaN(c) && c > 0) chuvaTotal += c;
+
+    // Vento — pega sempre o último registro
+    const v = parseFloat(r['VEN_VEL'] ?? r['VENTO_VEL'] ?? r['VEL_VENTO']);
+    if (!isNaN(v)) ventoKmh = (v * 3.6).toFixed(1); // m/s → km/h
+  });
+
+  return {
+    tMin:       tMin === Infinity  ? null : tMin.toFixed(1),
+    tMax:       tMax === -Infinity ? null : tMax.toFixed(1),
+    horarioMin,
+    chuva:      chuvaTotal > 0 ? chuvaTotal.toFixed(1) : '0,0',
+    choveu:     chuvaTotal > 0,
+    vento:      ventoKmh !== '--' ? ventoKmh : '--',
+  };
+}
+
+// ============================================================
+// RENDERIZA CARD COM DADOS REAIS
+// ============================================================
+function renderCard(est, dados, erro) {
+  const card = document.getElementById(`card-${est.codigo}`);
+  if (!card) return;
+
+  const f = (v, unit='') => v !== null && v !== undefined && v !== '--' ? `${v}${unit}` : '—';
+
+  if (erro) {
+    card.querySelector('.metrics').innerHTML = `
+      <div class="metric" style="grid-column:1/-1;text-align:center;padding:1rem">
+        <div class="m-label">Erro ao carregar</div>
+        <div class="m-value" style="font-size:12px;color:#ffb3c6">${erro}</div>
+        <div class="m-sub">Clique no card para abrir o INMET</div>
+      </div>`;
+    return;
+  }
+
+  const statusTexto = dados.choveu
+    ? `${f(dados.chuva,'mm')} acumulado`
+    : 'Sem chuva';
+  const statusCor = dados.choveu ? 'teal' : 'amber';
+  const statusValor = dados.choveu ? `${f(dados.chuva,'mm')}` : 'Não';
+
+  card.querySelector('.metrics').innerHTML = `
+    <div class="metric">
+      <div class="m-label">Mín.</div>
+      <div class="m-value amber">${f(dados.tMin,'°C')}</div>
+      <div class="m-sub">Registrada hoje</div>
+    </div>
+    <div class="metric">
+      <div class="m-label">Horário mín.</div>
+      <div class="m-value rose">${dados.horarioMin}</div>
+      <div class="m-sub">Horário Brasília</div>
+    </div>
+    <div class="metric">
+      <div class="m-label">Máx.</div>
+      <div class="m-value amber">${f(dados.tMax,'°C')}</div>
+      <div class="m-sub">Registrada hoje</div>
+    </div>
+    <div class="metric">
+      <div class="m-label">Vento</div>
+      <div class="m-value sky">${f(dados.vento,' km/h')}</div>
+      <div class="m-sub">Última leitura</div>
+    </div>
+    <div class="metric">
+      <div class="m-label">Chuva mm</div>
+      <div class="m-value ${statusCor}">${statusValor}</div>
+      <div class="m-sub">Acumulado dia</div>
+    </div>
+    <div class="metric">
+      <div class="m-label">Status</div>
+      <div class="m-value ${statusCor}">${dados.choveu ? 'Sim ☂' : 'Não ☀'}</div>
+      <div class="m-sub">${statusTexto}</div>
+    </div>`;
+}
+
+// ============================================================
+// BUSCA DADOS DE UMA ESTAÇÃO NA API DO INMET
+// Endpoint: https://apitempo.inmet.gov.br/estacao/DATA_INI/DATA_FIM/CODIGO
+// ============================================================
+async function fetchEstacao(est) {
+  const hoje = dataHoje();
+  // Chama a Netlify Function local — sem CORS, sem proxy externo
+  const url = `/.netlify/functions/inmet?codigo=${est.codigo}&data=${hoje}`;
+
+  try {
+    const resp = await fetch(url, { cache: 'no-store' });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const json = await resp.json();
+
+    if (json.erro) {
+      renderCard(est, null, json.erro);
+      return;
+    }
+    if (!Array.isArray(json) || json.length === 0) {
+      renderCard(est, null, 'Sem dados hoje ainda');
+      return;
+    }
+    const dados = processaRegistros(json);
+    renderCard(est, dados, null);
+  } catch(e) {
+    renderCard(est, null, 'Erro: ' + e.message);
+  }
+}
+
+// ============================================================
+// BUSCA TODAS AS ESTAÇÕES + ATUALIZA PAINEL GERAL
+// ============================================================
+async function fetchAllStations() {
+  const overlay = document.getElementById('loadingOverlay');
+  overlay.classList.add('active');
+
+  await Promise.all(ESTACOES.map(est => fetchEstacao(est)));
+
+  const now = new Date();
+  document.getElementById('lastUpdate').textContent = now.toLocaleString('pt-BR');
+  updateSkyTime(now.getHours());
+  overlay.classList.remove('active');
+}
+
+// ============================================================
+// INICIALIZAÇÃO — MONTA CARDS DINAMICAMENTE
+// ============================================================
+function buildCards() {
+  const grid = document.getElementById('stationsGrid');
+  grid.innerHTML = '';
+
+  ESTACOES.forEach((est, i) => {
+    const isWide = i === ESTACOES.length - 1;
+    const card = document.createElement('a');
+    card.className = 'station-card' + (isWide ? ' wide' : '');
+    card.href = `https://tempo.inmet.gov.br/TabelaEstacoes/${est.codigo}`;
+    card.target = '_blank';
+    card.id = `card-${est.codigo}`;
+    card.style.animationDelay = `${0.4 + i * 0.1}s`;
+    card.innerHTML = `
+      <div class="sc-top">
+        <span class="sc-badge">${est.codigo}</span>
+        <span class="sc-open">↗ abrir INMET</span>
+      </div>
+      <div class="sc-name">${est.nome}</div>
+      <div class="sc-region">${est.regiao}</div>
+      <div class="metrics">
+        <div class="metric" style="grid-column:1/-1;text-align:center;padding:1.2rem">
+          <div class="m-label">Carregando dados da API INMET</div>
+          <div style="margin-top:8px">
+            <div style="width:28px;height:28px;border:2px solid rgba(255,255,255,0.2);border-top-color:#FFD166;border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block"></div>
+          </div>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+// Roda ao carregar
+buildCards();
+fetchAllStations();
+</script>
+</body>
+</html>
